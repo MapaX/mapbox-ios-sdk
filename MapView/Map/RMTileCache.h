@@ -192,4 +192,5 @@ typedef enum : short {
 *   @return The number of tiles representing the coverage area. */
 - (NSUInteger)tileCountForSouthWest:(CLLocationCoordinate2D)southWest northEast:(CLLocationCoordinate2D)northEast minZoom:(NSUInteger)minZoom maxZoom:(NSUInteger)maxZoom;
 
+- (NSArray*) tileCaches;
 @end

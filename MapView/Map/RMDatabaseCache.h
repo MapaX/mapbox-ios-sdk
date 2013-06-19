@@ -62,6 +62,8 @@
 *   @param theCapacity The number of tiles to allow to accumulate in the database before purging begins. */
 - (void)setCapacity:(NSUInteger)theCapacity;
 
+- (NSUInteger)countTiles;
+
 /** The capacity, in number of tiles, that the database cache can hold. */
 @property (nonatomic, readonly, assign) NSUInteger capacity;
 

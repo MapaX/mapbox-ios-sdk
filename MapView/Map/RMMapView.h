@@ -136,6 +136,8 @@ typedef enum : NSUInteger {
 /** A Boolean value indicating whether to show a small logo in the corner of the map view. Defaults to `YES`. */
 @property (nonatomic, assign) BOOL showLogoBug;
 
+@property (nonatomic, strong) NSNumber* singleLayerInUse;
+
 #pragma mark - Initializers
 
 /** @name Initializing a Map View */
@@ -152,7 +154,9 @@ typedef enum : NSUInteger {
 *   @return An initialized map view, or `nil` if the map view was unable to be initialized. */
 - (id)initWithFrame:(CGRect)frame andTilesource:(id <RMTileSource>)newTilesource;
 
-/** Designated initializer. Initialize a map view. 
+- (id)initWithFrame:(CGRect)frame andTilesource:(id <RMTileSource>)newTilesource andUseSingleLayer:(NSNumber*) singleLayerValue;
+
+/** Designated initializer. Initialize a map view.
 *   @param frame The map view's frame. 
 *   @param newTilesource A tile source to use for the map tiles. 
 *   @param initialCenterCoordinate The starting map center coordinate.

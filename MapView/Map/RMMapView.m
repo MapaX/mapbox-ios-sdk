@@ -44,6 +44,7 @@
 #import "RMTileSource.h"
 #import "RMMapboxSource.h"
 
+#import "RMMapSingleTiledLayerView.h"
 #import "RMMapTiledLayerView.h"
 #import "RMMapOverlayView.h"
 #import "RMLoadingTileView.h"
@@ -236,6 +237,7 @@
 @synthesize debugTiles = _debugTiles;
 @synthesize hideAttribution = _hideAttribution;
 @synthesize showLogoBug = _showLogoBug;
+@synthesize singleLayerInUse;
 
 #pragma mark -
 #pragma mark Initialization
@@ -374,6 +376,11 @@
 - (id)initWithFrame:(CGRect)frame
 {
     return [self initWithFrame:frame andTilesource:[RMMapboxSource new]];
+}
+
+- (id)initWithFrame:(CGRect)frame andTilesource:(id <RMTileSource>)newTilesource andUseSingleLayer:(NSNumber*) singleLayerValue{
+    self.singleLayerInUse = singleLayerValue;
+    return [self initWithFrame:frame andTilesource:newTilesource];
 }
 
 - (id)initWithFrame:(CGRect)frame andTilesource:(id <RMTileSource>)newTilesource
@@ -926,6 +933,11 @@
 
 - (void)setTileSourcesConstraintsFromLatitudeLongitudeBoundingBox:(RMSphericalTrapezium)bounds
 {
+    if ([singleLayerInUse boolValue]) {
+        _constrainingProjectedBounds = _projection.planetBounds;
+        return;
+    }
+    
     BOOL tileSourcesConstrainMovement = !(bounds.northEast.latitude == 90.0 && bounds.northEast.longitude == 180.0 && bounds.southWest.latitude == -90.0 && bounds.southWest.longitude == -180.0);
 
     if (tileSourcesConstrainMovement)
@@ -1357,6 +1369,26 @@
         [_tiledLayersSuperview addSubview:tiledLayerView];
     }
 
+    if ([singleLayerInUse boolValue]) {
+        RMMapSingleTiledLayerView* tiledLayerView = [[RMMapSingleTiledLayerView alloc] initWithFrame:CGRectMake(0.0, 0.0, contentSize.width, contentSize.height) mapView:self forTileSources:_tileSourcesContainer.tileSources];
+        
+        
+        ((CATiledLayer *)tiledLayerView.layer).tileSize = CGSizeMake(tileSideLength, tileSideLength);
+        
+        [_tiledLayersSuperview addSubview:tiledLayerView];
+    }
+    else{
+        for (id <RMTileSource> tileSource in _tileSourcesContainer.tileSources)
+        {
+            RMMapTiledLayerView *tiledLayerView = [[RMMapTiledLayerView alloc] initWithFrame:CGRectMake(0.0, 0.0, contentSize.width, contentSize.height) mapView:self forTileSource:tileSource];
+            
+            ((CATiledLayer *)tiledLayerView.layer).tileSize = CGSizeMake(tileSideLength, tileSideLength);
+            
+            [_tiledLayersSuperview addSubview:tiledLayerView];
+        }
+    }
+    
+    
     [_mapScrollView addSubview:_tiledLayersSuperview];
 
     _lastZoom = [self zoom];
@@ -1695,10 +1727,8 @@
     {
         [self tapOnLabelForAnnotation:[((RMMarker *)[superlayer superlayer]) annotation] atPoint:[recognizer locationInView:self]];
     }
-    else
-    {
-        [self singleTapAtPoint:[recognizer locationInView:self]];
-    }
+    [self singleTapAtPoint:[recognizer locationInView:self]];
+    
 }
 
 - (void)doubleTapAtPoint:(CGPoint)aPoint
@@ -2219,7 +2249,7 @@
     {
         [self createMapView];
     }
-    else
+    else if(![self.singleLayerInUse boolValue])
     {
         NSUInteger tileSideLength = [_tileSourcesContainer tileSideLength];
         CGSize contentSize = CGSizeMake(tileSideLength, tileSideLength); // zoom level 1
@@ -2252,6 +2282,10 @@
         [self setTileSourcesConstraintsFromLatitudeLongitudeBoundingBox:[_tileSourcesContainer latitudeLongitudeBoundingBox]];
     }
 
+    if ([self.singleLayerInUse boolValue]) {
+        return;
+    }
+    
     // Remove the map layer
     RMMapTiledLayerView *tileSourceTiledLayerView = nil;
 
@@ -2285,6 +2319,10 @@
         [self setTileSourcesConstraintsFromLatitudeLongitudeBoundingBox:[_tileSourcesContainer latitudeLongitudeBoundingBox]];
     }
 
+    if ([self.singleLayerInUse boolValue]) {
+        return;
+    }
+    
     // Remove the map layer
     RMMapTiledLayerView *tileSourceTiledLayerView = [_tiledLayersSuperview.subviews objectAtIndex:index];
 
@@ -2305,7 +2343,11 @@
     RMProjectedPoint centerPoint = [self centerProjectedPoint];
 
     [_tileSourcesContainer moveTileSourceAtIndex:fromIndex toIndex:toIndex];
-
+    
+    if ([self.singleLayerInUse boolValue]) {
+        return;
+    }
+    
     // Move the map layer
     [_tiledLayersSuperview exchangeSubviewAtIndex:fromIndex withSubviewAtIndex:toIndex];
 
@@ -2314,6 +2356,10 @@
 
 - (void)setHidden:(BOOL)isHidden forTileSource:(id <RMTileSource>)tileSource
 {
+    if ([self.singleLayerInUse boolValue]) {
+        return;
+    }
+    
     NSArray *tileSources = [self tileSources];
 
     [tileSources enumerateObjectsUsingBlock:^(id <RMTileSource> currentTileSource, NSUInteger index, BOOL *stop)
@@ -2328,6 +2374,10 @@
 
 - (void)setHidden:(BOOL)isHidden forTileSourceAtIndex:(NSUInteger)index
 {
+    if ([self.singleLayerInUse boolValue]) {
+        return;
+    }
+    
     if (index >= [_tiledLayersSuperview.subviews count])
         return;
 

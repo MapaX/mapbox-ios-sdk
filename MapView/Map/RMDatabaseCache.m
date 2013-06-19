@@ -35,7 +35,6 @@
 @interface RMDatabaseCache ()
 
 - (NSUInteger)count;
-- (NSUInteger)countTiles;
 - (void)touchTile:(RMTile)tile withKey:(NSString *)cacheKey;
 - (void)purgeTiles:(NSUInteger)count;
 
@@ -111,6 +110,13 @@
     [_writeQueue setMaxConcurrentOperationCount:1];
     _writeQueueLock = [NSRecursiveLock new];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(RMTileCapacityChanged:)
+                                                 name:@"RMTileCapacityChanged"
+                                               object:nil];
+    
+	RMLog(@"Opening database at %@", path);
+
     _queue = [FMDatabaseQueue databaseQueueWithPath:path];
 
 	if (!_queue)
@@ -132,6 +138,10 @@
     _tileCount = [self countTiles];
 
 	return self;	
+}
+
+-(void)RMTileCapacityChanged:(NSNotification*)notification{
+    [self setCapacity:[notification.object intValue]];
 }
 
 - (id)initUsingCacheDir:(BOOL)useCacheDir

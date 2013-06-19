@@ -47,6 +47,8 @@
 		25757F4F1291C8640083D504 /* RMCircle.h in Headers */ = {isa = PBXBuildFile; fileRef = 25757F4D1291C8640083D504 /* RMCircle.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		25757F501291C8640083D504 /* RMCircle.m in Sources */ = {isa = PBXBuildFile; fileRef = 25757F4E1291C8640083D504 /* RMCircle.m */; };
 		96492C400FA8AD3400EBA6D2 /* RMGlobalConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 96492C3F0FA8AD3400EBA6D2 /* RMGlobalConstants.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		9741955F176FA31500192813 /* RMMapSingleTiledLayerView.h in Headers */ = {isa = PBXBuildFile; fileRef = 9741955D176FA31500192813 /* RMMapSingleTiledLayerView.h */; };
+		97419560176FA31500192813 /* RMMapSingleTiledLayerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 9741955E176FA31500192813 /* RMMapSingleTiledLayerView.m */; };
 		B1EB26C610B5D8E6009F8658 /* RMNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = B1EB26C510B5D8E6009F8658 /* RMNotifications.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		B8474BA40EB40094006A0BC1 /* RMDatabaseCache.h in Headers */ = {isa = PBXBuildFile; fileRef = B8474B980EB40094006A0BC1 /* RMDatabaseCache.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B8474BA50EB40094006A0BC1 /* RMDatabaseCache.m in Sources */ = {isa = PBXBuildFile; fileRef = B8474B990EB40094006A0BC1 /* RMDatabaseCache.m */; };
@@ -234,6 +236,8 @@
 		288765A40DF7441C002DB57D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		32CA4F630368D1EE00C91783 /* MapView_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MapView_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		96492C3F0FA8AD3400EBA6D2 /* RMGlobalConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RMGlobalConstants.h; sourceTree = "<group>"; };
+		9741955D176FA31500192813 /* RMMapSingleTiledLayerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RMMapSingleTiledLayerView.h; sourceTree = "<group>"; };
+		9741955E176FA31500192813 /* RMMapSingleTiledLayerView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RMMapSingleTiledLayerView.m; sourceTree = "<group>"; };
 		B1EB26C510B5D8E6009F8658 /* RMNotifications.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RMNotifications.h; sourceTree = "<group>"; };
 		B83E64B60E80E73F001663B6 /* RMPixel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RMPixel.h; sourceTree = "<group>"; };
 		B83E64B70E80E73F001663B6 /* RMPixel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = RMPixel.c; sourceTree = "<group>"; };
@@ -460,6 +464,8 @@
 		B83E64CE0E80E73F001663B6 /* Tile & Overlay Rendering */ = {
 			isa = PBXGroup;
 			children = (
+				9741955D176FA31500192813 /* RMMapSingleTiledLayerView.h */,
+				9741955E176FA31500192813 /* RMMapSingleTiledLayerView.m */,
 				B83E64D80E80E73F001663B6 /* RMTileImage.h */,
 				B83E64D90E80E73F001663B6 /* RMTileImage.m */,
 				160E535513FBDB47004F82F9 /* RMMapTiledLayerView.h */,
@@ -800,6 +806,7 @@
 				DD4195C9162356900049E6BA /* RMBingSource.h in Headers */,
 				DD56B9571961E23F00706C67 /* FMDB.h in Headers */,
 				DD1E3C6E161F954F004FC649 /* SMCalloutView.h in Headers */,
+				9741955F176FA31500192813 /* RMMapSingleTiledLayerView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -979,6 +986,7 @@
 				DDE357F916522CD8001DB842 /* RMPolygonAnnotation.m in Sources */,
 				DD1985C2165C5F6400DF667F /* RMTileMillSource.m in Sources */,
 				DD56B9521961E23F00706C67 /* FMDatabaseAdditions.m in Sources */,
+				97419560176FA31500192813 /* RMMapSingleTiledLayerView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

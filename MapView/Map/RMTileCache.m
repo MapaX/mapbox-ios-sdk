@@ -581,6 +581,10 @@ static NSMutableDictionary *predicateValues = nil;
 
     // Check the values
 
+    if ([[NSUserDefaults standardUserDefaults] integerForKey:@"RMTileCacheCapacity"] > 0) {
+        capacityNumber = [NSNumber numberWithInteger:[[NSUserDefaults standardUserDefaults] integerForKey:@"RMTileCacheCapacity"]];
+    }
+    
     if (capacityNumber != nil)
     {
         NSInteger value = [capacityNumber intValue];
