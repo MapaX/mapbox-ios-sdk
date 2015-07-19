@@ -35,6 +35,7 @@ Pod::Spec.new do |m|
     'MapView/Map/RMMapOverlayView.h',
     'MapView/Map/RMMapTiledLayerView.h',
     'MapView/Map/RMMapScrollView.h',
+    'MapView/Map/RMTileSource.h',
     'MapView/Map/RMTileSourcesContainer.h',
     'MapView/Map/Mapbox.h',
     'MapView/Map/RMAnnotation.h',
