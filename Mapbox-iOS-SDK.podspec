@@ -26,44 +26,7 @@ Pod::Spec.new do |m|
 
   m.prefix_header_file = 'MapView/MapView_Prefix.pch'
 
-  m.public_header_files = [
-    'MapView/Map/RMFoundation.h',
-    'MapView/Map/RMGlobalConstants.h',
-    'MapView/Map/RMTile.h',
-    'MapView/Map/RMProjection.h',
-    'MapView/Map/RMMapLayer.h',
-    'MapView/Map/RMMapOverlayView.h',
-    'MapView/Map/RMMapTiledLayerView.h',
-    'MapView/Map/RMMapScrollView.h',
-    'MapView/Map/RMTileSource.h',
-    'MapView/Map/RMTileSourcesContainer.h',
-    'MapView/Map/Mapbox.h',
-    'MapView/Map/RMAnnotation.h',
-    'MapView/Map/RMCacheObject.h',
-    'MapView/Map/RMCircle.h',
-    'MapView/Map/RMCircleAnnotation.h',
-    'MapView/Map/RMCompositeSource.h',
-    'MapView/Map/RMConfiguration.h',
-    'MapView/Map/RMCoordinateGridSource.h',
-    'MapView/Map/RMDatabaseCache.h',
-    'MapView/Map/RMGreatCircleAnnotation.h',
-    'MapView/Map/RMInteractiveSource.h',
-    'MapView/Map/RMMBTilesSource.h',
-    'MapView/Map/RMMapboxSource.h',
-    'MapView/Map/RMMapView.h',
-    'MapView/Map/RMMapViewDelegate.h',
-    'MapView/Map/RMMarker.h',
-    'MapView/Map/RMMemoryCache.h',
-    'MapView/Map/RMPointAnnotation.h',
-    'MapView/Map/RMPolygonAnnotation.h',
-    'MapView/Map/RMPolylineAnnotation.h',
-    'MapView/Map/RMShape.h',
-    'MapView/Map/RMStaticMapView.h',
-    'MapView/Map/RMTileCache.h',
-    'MapView/Map/RMTileMillSource.h',
-    'MapView/Map/RMUserLocation.h',
-    'MapView/Map/RMUserTrackingBarButtonItem.h'
-  ]
+  m.public_header_files = 'MapView/Map/*.h'
 
   m.resource_bundle = {
     'Mapbox' => 'MapView/Map/Resources/*'
