@@ -13,12 +13,11 @@
 
 @class RMMapView;
 
-@interface RMMapSingleTiledLayerView : RMMapTiledLayerView
+@interface RMMapSingleTiledLayerView : UIView
 
 @property (nonatomic, assign) BOOL useSnapshotRenderer;
+@property (nonatomic, readonly) NSArray* tileSources;
 
-@property (nonatomic, retain) RMMapView *mapView;
-
-- (id)initWithFrame:(CGRect)frame mapView:(RMMapView *)aMapView forTileSources:(NSArray*)aTileSources;
+- (id)initWithFrame:(CGRect)frame mapView:(RMMapView *)aMapView forTileSources:(NSArray*) aTileSources;
 
 @end

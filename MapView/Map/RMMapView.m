@@ -1360,15 +1360,6 @@
     _tiledLayersSuperview = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, contentSize.width, contentSize.height)];
     _tiledLayersSuperview.userInteractionEnabled = NO;
 
-    for (id <RMTileSource> tileSource in _tileSourcesContainer.tileSources)
-    {
-        RMMapTiledLayerView *tiledLayerView = [[RMMapTiledLayerView alloc] initWithFrame:CGRectMake(0.0, 0.0, contentSize.width, contentSize.height) mapView:self forTileSource:tileSource];
-
-        ((CATiledLayer *)tiledLayerView.layer).tileSize = CGSizeMake(tileSideLength, tileSideLength);
-
-        [_tiledLayersSuperview addSubview:tiledLayerView];
-    }
-
     if ([singleLayerInUse boolValue]) {
         RMMapSingleTiledLayerView* tiledLayerView = [[RMMapSingleTiledLayerView alloc] initWithFrame:CGRectMake(0.0, 0.0, contentSize.width, contentSize.height) mapView:self forTileSources:_tileSourcesContainer.tileSources];
         
@@ -3348,6 +3339,11 @@
 #pragma mark -
 #pragma mark User Location
 
+- (void)showsUserLocationNoLocationManager{
+    _showsUserLocation = YES;
+    self.userLocation = [RMUserLocation annotationWithMapView:self coordinate:CLLocationCoordinate2DMake(MAXFLOAT, MAXFLOAT) andTitle:nil];
+}
+
 - (void)setShowsUserLocation:(BOOL)newShowsUserLocation
 {
     if (newShowsUserLocation == _showsUserLocation)
@@ -3378,6 +3374,9 @@
 
         _locationManager.headingFilter = 5.0;
         _locationManager.delegate = self;
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stopListeningLocation) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startListeningLocation) name:UIApplicationWillEnterForegroundNotification object:nil];
         [_locationManager startUpdatingLocation];
     }
     else
@@ -3400,6 +3399,18 @@
 
         self.userLocation = nil;
     }
+}
+
+-(void)startListeningLocation{
+    if (_userTrackingMode == RMUserTrackingModeFollowWithHeading){
+    [_locationManager startUpdatingHeading];
+    }
+    [_locationManager startUpdatingLocation];
+}
+
+-(void)stopListeningLocation{
+    [_locationManager stopUpdatingHeading];
+    [_locationManager stopUpdatingLocation];
 }
 
 - (void)setUserLocation:(RMUserLocation *)newUserLocation
