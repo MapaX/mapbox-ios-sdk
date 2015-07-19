@@ -30,6 +30,7 @@ Pod::Spec.new do |m|
     'MapView/Map/RMFoundation.h',
     'MapView/Map/RMGlobalConstants.h',
     'MapView/Map/RMTile.h',
+    'MapView/Map/RMProjection.h',
     'MapView/Map/RMMapLayer.h',
     'MapView/Map/Mapbox.h',
     'MapView/Map/RMAnnotation.h',
