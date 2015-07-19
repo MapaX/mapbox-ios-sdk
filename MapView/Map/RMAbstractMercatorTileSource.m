@@ -1,7 +1,7 @@
 //
 //  RMAbstractMercatorTileSource.m
 //
-// Copyright (c) 2008-2012, Route-Me Contributors
+// Copyright (c) 2008-2013, Route-Me Contributors
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
     RMFractalTileProjection *_tileProjection;
 }
 
-@synthesize minZoom = _minZoom, maxZoom = _maxZoom;
+@synthesize minZoom = _minZoom, maxZoom = _maxZoom, cacheable = _cacheable, opaque = _opaque;
 
 - (id)init
 {
@@ -48,13 +48,10 @@
     self.minZoom = kDefaultMinTileZoom;
     self.maxZoom = kDefaultMaxTileZoom;
 
-    return self;
-}
+    self.cacheable = YES;
+    self.opaque = YES;
 
-- (void)dealloc
-{
-    [_tileProjection release]; _tileProjection = nil;
-    [super dealloc];
+    return self;
 }
 
 - (RMSphericalTrapezium)latitudeLongitudeBoundingBox
@@ -68,6 +65,11 @@
                                    reason:@"imageForTile:inCache: invoked on RMAbstractMercatorTileSource. Override this method when instantiating an abstract class."
                                  userInfo:nil];
 }    
+
+- (BOOL)tileSourceHasTile:(RMTile)tile
+{
+    return YES;
+}
 
 - (void)cancelAllDownloads
 {
@@ -88,7 +90,7 @@
                                                                       minZoom:self.minZoom];
     }
 
-    return [[_tileProjection retain] autorelease];
+    return _tileProjection;
 }
 
 - (void)didReceiveMemoryWarning

@@ -2,7 +2,7 @@
 //  RMMBTilesSource.m
 //
 //  Created by Justin R. Miller on 6/18/10.
-//  Copyright 2012 MapBox.
+//  Copyright 2012-2013 Mapbox.
 //  All rights reserved.
 //  
 //  Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
 //        notice, this list of conditions and the following disclaimer in the
 //        documentation and/or other materials provided with the distribution.
 //  
-//      * Neither the name of MapBox, nor the names of its contributors may be
+//      * Neither the name of Mapbox, nor the names of its contributors may be
 //        used to endorse or promote products derived from this software
 //        without specific prior written permission.
 //  
@@ -36,12 +36,24 @@
 #import "RMProjection.h"
 #import "RMFractalTileProjection.h"
 
-#import "FMDatabase.h"
-#import "FMDatabaseQueue.h"
+#import "FMDB.h"
 
 @implementation RMMBTilesSource
 {
     RMFractalTileProjection *tileProjection;
+    NSString *_uniqueTilecacheKey;
+}
+
+@synthesize cacheable = _cacheable, opaque = _opaque;
+
+- (id)initWithTileSetResource:(NSString *)name
+{
+    return [self initWithTileSetResource:name ofType:([[[name pathExtension] lowercaseString] isEqualToString:@"mbtiles"] ? @"" : @"mbtiles")];
+}
+
+- (id)initWithTileSetResource:(NSString *)name ofType:(NSString *)extension
+{
+    return [self initWithTileSetURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:name ofType:extension]]];
 }
 
 - (id)initWithTileSetURL:(NSURL *)tileSetURL
@@ -54,14 +66,19 @@
                                                                  maxZoom:kMBTilesDefaultMaxTileZoom 
                                                                  minZoom:kMBTilesDefaultMinTileZoom];
 
-    queue = [[FMDatabaseQueue databaseQueueWithPath:[tileSetURL path]] retain];
+    queue = [FMDatabaseQueue databaseQueueWithPath:[tileSetURL path]];
 
     if ( ! queue)
         return nil;
 
+    _uniqueTilecacheKey = [NSString stringWithFormat:@"MBTiles%@", [queue.path lastPathComponent]];
+
     [queue inDatabase:^(FMDatabase *db) {
         [db setShouldCacheStatements:YES];
     }];
+
+    self.cacheable = NO;
+    self.opaque = YES;
 
 	return self;
 }
@@ -69,13 +86,6 @@
 - (void)cancelAllDownloads
 {
     // no-op
-}
-
-- (void)dealloc
-{
-	[tileProjection release]; tileProjection = nil;
-    [queue release]; queue = nil;
-	[super dealloc];
 }
 
 - (NSUInteger)tileSideLength
@@ -89,30 +99,30 @@
 			  @"%@ tried to retrieve tile with zoomLevel %d, outside source's defined range %f to %f", 
 			  self, tile.zoom, self.minZoom, self.maxZoom);
 
-    NSInteger zoom = tile.zoom;
-    NSInteger x    = tile.x;
-    NSInteger y    = pow(2, zoom) - tile.y - 1;
+    NSUInteger zoom = tile.zoom;
+    NSUInteger x    = tile.x;
+    NSUInteger y    = pow(2, zoom) - tile.y - 1;
 
     dispatch_async(dispatch_get_main_queue(), ^(void)
     {
         [[NSNotificationCenter defaultCenter] postNotificationName:RMTileRequested object:[NSNumber numberWithUnsignedLongLong:RMTileKey(tile)]];
     });
     
-    __block UIImage *image;
+    __block UIImage *image = nil;
 
     [queue inDatabase:^(FMDatabase *db)
     {
         FMResultSet *results = [db executeQuery:@"select tile_data from tiles where zoom_level = ? and tile_column = ? and tile_row = ?", 
-                                   [NSNumber numberWithShort:zoom], 
-                                   [NSNumber numberWithUnsignedInt:x], 
-                                   [NSNumber numberWithUnsignedInt:y]];
+                                   [NSNumber numberWithUnsignedLongLong:zoom],
+                                   [NSNumber numberWithUnsignedLongLong:x],
+                                   [NSNumber numberWithUnsignedLongLong:y]];
 
         if ([db hadError])
             image = [RMTileImage errorTile];
 
         [results next];
 
-        NSData *data = [results dataForColumn:@"tile_data"];
+        NSData *data = ([[results columnNameToIndexMap] count] ? [results dataForColumn:@"tile_data"] : nil);
 
         if ( ! data)
             image = [RMTileImage errorTile];
@@ -128,6 +138,11 @@
     });
 
     return image;
+}
+
+- (BOOL)tileSourceHasTile:(RMTile)tile
+{
+    return YES;
 }
 
 - (NSString *)tileURL:(RMTile)tile
@@ -147,7 +162,7 @@
 
 - (RMFractalTileProjection *)mercatorToTileProjection
 {
-	return [[tileProjection retain] autorelease];
+	return tileProjection;
 }
 
 - (RMProjection *)projection
@@ -238,21 +253,9 @@
     return bounds;
 }
 
-- (BOOL)coversFullWorld
-{
-    RMSphericalTrapezium ownBounds     = [self latitudeLongitudeBoundingBox];
-    RMSphericalTrapezium defaultBounds = kMBTilesDefaultLatLonBoundingBox;
-
-    if (ownBounds.southWest.longitude <= defaultBounds.southWest.longitude + 10 && 
-        ownBounds.northEast.longitude >= defaultBounds.northEast.longitude - 10)
-        return YES;
-
-    return NO;
-}
-
 - (NSString *)legend
 {
-    __block NSString *legend;
+    __block NSString *legend  = nil;
 
     [queue inDatabase:^(FMDatabase *db)
     {
@@ -271,6 +274,57 @@
     return legend;
 }
 
+- (CLLocationCoordinate2D)centerCoordinate
+{
+    __block CLLocationCoordinate2D centerCoordinate = CLLocationCoordinate2DMake(0, 0);
+
+    [queue inDatabase:^(FMDatabase *db)
+    {
+        FMResultSet *results = [db executeQuery:@"select value from metadata where name = 'center'"];
+
+        [results next];
+
+        if ([results stringForColumn:@"value"] && [[[results stringForColumn:@"value"] componentsSeparatedByString:@","] count] >= 2)
+            centerCoordinate = CLLocationCoordinate2DMake([[[[results stringForColumn:@"value"] componentsSeparatedByString:@","] objectAtIndex:1] doubleValue],
+                                                          [[[[results stringForColumn:@"value"] componentsSeparatedByString:@","] objectAtIndex:0] doubleValue]);
+
+        [results close];
+    }];
+    
+    return centerCoordinate;
+}
+
+- (float)centerZoom
+{
+    __block CGFloat centerZoom = [self minZoom];
+
+    [queue inDatabase:^(FMDatabase *db)
+    {
+        FMResultSet *results = [db executeQuery:@"select value from metadata where name = 'center'"];
+
+        [results next];
+
+        if ([results stringForColumn:@"value"] && [[[results stringForColumn:@"value"] componentsSeparatedByString:@","] count] >= 3)
+            centerZoom = [[[[results stringForColumn:@"value"] componentsSeparatedByString:@","] objectAtIndex:2] floatValue];
+
+         [results close];
+     }];
+    
+    return centerZoom;
+}
+
+- (BOOL)coversFullWorld
+{
+    RMSphericalTrapezium ownBounds     = [self latitudeLongitudeBoundingBox];
+    RMSphericalTrapezium defaultBounds = kMBTilesDefaultLatLonBoundingBox;
+
+    if (ownBounds.southWest.longitude <= defaultBounds.southWest.longitude + 10 &&
+        ownBounds.northEast.longitude >= defaultBounds.northEast.longitude - 10)
+        return YES;
+
+    return NO;
+}
+
 - (void)didReceiveMemoryWarning
 {
     NSLog(@"*** didReceiveMemoryWarning in %@", [self class]);
@@ -278,12 +332,12 @@
 
 - (NSString *)uniqueTilecacheKey
 {
-    return [NSString stringWithFormat:@"MBTiles%@", [queue.path lastPathComponent]];
+    return _uniqueTilecacheKey;
 }
 
 - (NSString *)shortName
 {
-    __block NSString *shortName;
+    __block NSString *shortName = nil;
 
     [queue inDatabase:^(FMDatabase *db)
     {
@@ -304,7 +358,7 @@
 
 - (NSString *)longDescription
 {
-    __block NSString *description;
+    __block NSString *description = nil;
 
     [queue inDatabase:^(FMDatabase *db)
     {
@@ -325,7 +379,7 @@
 
 - (NSString *)shortAttribution
 {
-    __block NSString *attribution;
+    __block NSString *attribution = nil;
 
     [queue inDatabase:^(FMDatabase *db)
     {

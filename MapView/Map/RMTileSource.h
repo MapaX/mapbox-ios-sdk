@@ -1,7 +1,7 @@
 //
 //  RMTileSource.h
 //
-// Copyright (c) 2008-2012, Route-Me Contributors
+// Copyright (c) 2008-2013, Route-Me Contributors
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,12 @@
 /** The maximum zoom level supported by the tile source. */
 @property (nonatomic, assign) float maxZoom;
 
+/** A Boolean value indicating whether the tiles from this source should be cached. */
+@property (nonatomic, assign, getter=isCacheable) BOOL cacheable;
+
+/** A Boolean value indicating whether the tiles from this source are opaque. Setting this correctly is important when using RMCompositeSource so that alpha transparency can be preserved when compositing tile images. */
+@property (nonatomic, assign, getter=isOpaque) BOOL opaque;
+
 @property (nonatomic, readonly) RMFractalTileProjection *mercatorToTileProjection;
 @property (nonatomic, readonly) RMProjection *projection;
 
@@ -92,6 +98,11 @@
 *   @param tileCache A tile cache to check first when providing the image.
 *   @return An image to display. */
 - (UIImage *)imageForTile:(RMTile)tile inCache:(RMTileCache *)tileCache;
+
+/** Check if the tile source can provide the requested tile.
+ *  @param tile The map tile in question.
+ *  @return A Boolean value indicating whether the tile source can provide the requested tile. */
+- (BOOL)tileSourceHasTile:(RMTile)tile;
 
 - (void)cancelAllDownloads;
 
