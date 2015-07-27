@@ -74,7 +74,7 @@
     CGRect bounds = self.bounds;
     short zoom    = log2(bounds.size.width / rect.size.width);
     
-    //    NSLog(@"drawLayer: {{%f,%f},{%f,%f}}", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+    NSLog(@"drawLayer: {{%f,%f},{%f,%f}}", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
     
     if (self.useSnapshotRenderer)
     {
@@ -134,8 +134,11 @@
                 
                 if ((zoom >= [_tileSource minZoom]) && (zoom <= [_tileSource maxZoom])) {
                     tileImage = [(RMMBTilesSource*) _tileSource imageForTile:RMTileMake(x, y, zoom) inCache:nil];
-                    if (tileImage != nil && ![tileImage  isEqual:[RMTileImage errorTile]]) {
+                    if (!IS_VALID_TILE_IMAGE(tileImage)) {
                         tileImage = nil;
+                    }
+                    else{
+                        break;
                     }
                 }
                 
