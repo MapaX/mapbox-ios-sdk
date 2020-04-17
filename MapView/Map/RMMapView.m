@@ -52,8 +52,6 @@
 #import "RMUserLocation.h"
 #import "RMUserTrackingBarButtonItem.h"
 
-#import "RMAttributionViewController.h"
-
 #import "SMCalloutView.h"
 
 #pragma mark --- begin constants ----
@@ -198,7 +196,6 @@
 
     __weak UIViewController *_viewControllerPresentingAttribution;
     UIButton *_attributionButton;
-    UIPopoverController *_attributionPopover;
 
     CGAffineTransform _mapTransform;
     CATransform3D _annotationTransform;
@@ -1638,7 +1635,7 @@
         _accumulatedDelta.x += delta.x;
         _accumulatedDelta.y += delta.y;
 
-        if (fabsf(_accumulatedDelta.x) < kZoomRectPixelBuffer && fabsf(_accumulatedDelta.y) < kZoomRectPixelBuffer)
+        if (fabs(_accumulatedDelta.x) < kZoomRectPixelBuffer && fabs(_accumulatedDelta.y) < kZoomRectPixelBuffer)
         {
             [_overlayView moveLayersBy:_accumulatedDelta];
             [self performSelector:@selector(correctPositionOfAllAnnotations) withObject:nil afterDelay:0.1];
@@ -1732,7 +1729,7 @@
         {
             [self zoomInToNextNativeZoomAt:[self convertPoint:self.center fromView:self.superview] animated:YES];
         }
-        else if (self.userTrackingMode != RMUserTrackingModeNone && fabsf(aPoint.x - [self coordinateToPixel:self.userLocation.location.coordinate].x) < 75 && fabsf(aPoint.y - [self coordinateToPixel:self.userLocation.location.coordinate].y) < 75)
+        else if (self.userTrackingMode != RMUserTrackingModeNone && fabs(aPoint.x - [self coordinateToPixel:self.userLocation.location.coordinate].x) < 75 && fabs(aPoint.y - [self coordinateToPixel:self.userLocation.location.coordinate].y) < 75)
         {
             [self zoomInToNextNativeZoomAt:[self coordinateToPixel:self.userLocation.location.coordinate] animated:YES];
         }
@@ -3598,7 +3595,7 @@
         CGPoint mapCenterPoint    = [self convertPoint:self.center fromView:self.superview];
         CGPoint userLocationPoint = [self mapPositionForAnnotation:self.userLocation];
 
-        if (fabsf(userLocationPoint.x - mapCenterPoint.x) > 1.0 || fabsf(userLocationPoint.y - mapCenterPoint.y) > 1.0)
+        if (fabs(userLocationPoint.x - mapCenterPoint.x) > 1.0 || fabs(userLocationPoint.y - mapCenterPoint.y) > 1.0)
         {
             if (round(_zoom) >= 10)
             {
@@ -3930,99 +3927,6 @@
     [self layoutSubviews];
 }
 
-- (UIViewController *)viewControllerPresentingAttribution
-{
-    return _viewControllerPresentingAttribution;
-}
-
-- (void)setViewControllerPresentingAttribution:(UIViewController *)viewController
-{
-    _viewControllerPresentingAttribution = viewController;
-    
-    if (_viewControllerPresentingAttribution && ! _attributionButton)
-    {
-        _attributionButton = [UIButton buttonWithType:UIButtonTypeInfoLight];
-        _attributionButton.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleLeftMargin;
-        _attributionButton.translatesAutoresizingMaskIntoConstraints = NO;
-        [_attributionButton addTarget:self action:@selector(showAttribution:) forControlEvents:UIControlEventTouchUpInside];
-        _attributionButton.frame = CGRectMake(self.bounds.size.width - _attributionButton.bounds.size.width - 8,
-                                              self.bounds.size.height - _attributionButton.bounds.size.height - 8,
-                                              _attributionButton.bounds.size.width,
-                                              _attributionButton.bounds.size.height);
-        [self addSubview:_attributionButton];
-        [self updateConstraints];
-    }
-    else if ( ! _viewControllerPresentingAttribution && _attributionButton)
-    {
-        [_attributionButton removeFromSuperview];
-        _attributionButton = nil;
-    }
-}
-
-- (void)showAttribution:(id)sender
-{
-    if (_viewControllerPresentingAttribution)
-    {
-        RMAttributionViewController *attributionViewController = [[RMAttributionViewController alloc] initWithMapView:self];
-
-        if (RMPostVersion7)
-        {
-            attributionViewController.view.tintColor = self.tintColor;
-            attributionViewController.edgesForExtendedLayout = UIRectEdgeNone;
-
-            if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
-            {
-                // show popover
-                //
-                _attributionPopover = [[UIPopoverController alloc] initWithContentViewController:attributionViewController];
-                _attributionPopover.backgroundColor = [UIColor whiteColor];
-                _attributionPopover.popoverContentSize = CGSizeMake(320, 320);
-                _attributionPopover.delegate = self;
-                [_attributionPopover presentPopoverFromRect:_attributionButton.frame
-                                                     inView:self
-                                   permittedArrowDirections:UIPopoverArrowDirectionDown
-                                                   animated:NO];
-            }
-            else
-            {
-                // slide up see-through modal
-                //
-                attributionViewController.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-                                                                                                                            target:self
-                                                                                                                            action:@selector(dismissAttribution:)];
-
-                UINavigationController *wrapper = [[UINavigationController alloc] initWithRootViewController:attributionViewController];
-                wrapper.navigationBar.tintColor = self.tintColor;
-                wrapper.modalPresentationStyle = UIModalPresentationCustom;
-                wrapper.transitioningDelegate = self;
-                [_viewControllerPresentingAttribution presentViewController:wrapper animated:YES completion:nil];
-            }
-        }
-        else
-        {
-            // page curl reveal behind map
-            //
-            attributionViewController.modalTransitionStyle = UIModalTransitionStylePartialCurl;
-            [_viewControllerPresentingAttribution presentViewController:attributionViewController animated:YES completion:nil];
-        }
-    }
-}
-
-- (void)dismissAttribution:(id)sender
-{
-    [_viewControllerPresentingAttribution dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)popoverController:(UIPopoverController *)popoverController willRepositionPopoverToRect:(inout CGRect *)rect inView:(inout UIView **)view
-{
-    *rect = _attributionButton.frame;
-}
-
-- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
-{
-    _attributionPopover = nil;
-}
-
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
 {
     return self;
@@ -4040,7 +3944,6 @@
 
 - (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext
 {
-    UIView *inView   = [transitionContext containerView];
     UIView *fromView = [[transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey] view];
     UIView *toView   = [[transitionContext viewControllerForKey:UITransitionContextToViewControllerKey] view];
 
@@ -4061,23 +3964,8 @@
 
     BOOL isPresentation;
 
-    if ([[transitionContext viewControllerForKey:UITransitionContextToViewControllerKey] isKindOfClass:[UINavigationController class]] &&
-        [[(UINavigationController *)[transitionContext viewControllerForKey:UITransitionContextToViewControllerKey] topViewController] isKindOfClass:[RMAttributionViewController class]])
-    {
-        isPresentation = YES;
-
-        [inView addSubview:toView];
-
-        toView.bounds = fromView.bounds;
-
-        toView.center = offScreenCenter;
-    }
-    else
-    {
-        isPresentation = NO;
-
-        fromView.center = onScreenCenter;
-    }
+    isPresentation = NO;
+    fromView.center = onScreenCenter;
 
     [UIView animateWithDuration:[self transitionDuration:transitionContext]
                           delay:0
