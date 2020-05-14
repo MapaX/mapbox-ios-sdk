@@ -105,8 +105,6 @@
 
     self.backgroundColor = [UIColor colorWithPatternImage:[RMMapView resourceImageNamed:@"LoadingTile.png"]];
 
-    self.hideAttribution = YES;
-
     self.showsUserLocation = NO;
 
     self.userInteractionEnabled = NO;
