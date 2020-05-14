@@ -76,7 +76,6 @@
                                        UIViewControllerTransitioningDelegate,
                                        UIViewControllerAnimatedTransitioning>
 
-@property (nonatomic, assign) UIViewController *viewControllerPresentingAttribution;
 @property (nonatomic, retain) RMUserLocation *userLocation;
 
 - (void)createMapView;
@@ -194,9 +193,6 @@
 
     RMUserTrackingBarButtonItem *_userTrackingBarButtonItem;
 
-    __weak UIViewController *_viewControllerPresentingAttribution;
-    UIButton *_attributionButton;
-
     CGAffineTransform _mapTransform;
     CATransform3D _annotationTransform;
 
@@ -232,7 +228,6 @@
 @synthesize displayHeadingCalibration = _displayHeadingCalibration;
 @synthesize missingTilesDepth = _missingTilesDepth;
 @synthesize debugTiles = _debugTiles;
-@synthesize hideAttribution = _hideAttribution;
 @synthesize showLogoBug = _showLogoBug;
 @synthesize singleLayerInUse;
 
@@ -599,38 +594,6 @@
         }
     }
 
-    if (_attributionButton)
-    {
-        if ( ! [[viewController.view valueForKeyPath:@"constraints.firstItem"]  containsObject:_attributionButton] &&
-             ! [[viewController.view valueForKeyPath:@"constraints.secondItem"] containsObject:_attributionButton])
-        {
-            NSString *formatString;
-            NSDictionary *views;
-
-            if (RMPostVersion7)
-            {
-                formatString = @"V:[attributionButton]-bottomSpacing-[bottomLayoutGuide]";
-                views = @{ @"attributionButton" : _attributionButton,
-                           @"bottomLayoutGuide" : viewController.bottomLayoutGuide };
-            }
-            else
-            {
-                formatString = @"V:[attributionButton]-bottomSpacing-|";
-                views = @{ @"attributionButton" : _attributionButton };
-            }
-
-            [viewController.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:formatString
-                                                                                        options:0
-                                                                                        metrics:@{ @"bottomSpacing" : @(8) }
-                                                                                          views:views]];
-
-            [viewController.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[attributionButton]-rightSpacing-|"
-                                                                                        options:0
-                                                                                        metrics:@{ @"rightSpacing" : @(8) }
-                                                                                          views:views]];
-        }
-    }
-
     [super updateConstraints];
 }
 
@@ -651,22 +614,11 @@
                                   backgroundImage:nil];
     }
 
-    if ( ! self.viewControllerPresentingAttribution && ! _hideAttribution)
-    {
-        self.viewControllerPresentingAttribution = [self viewController];
-    }
-    else if (self.viewControllerPresentingAttribution && _hideAttribution)
-    {
-        self.viewControllerPresentingAttribution = nil;
-    }
-
     [super layoutSubviews];
 }
 
 - (void)removeFromSuperview
 {
-    self.viewControllerPresentingAttribution = nil;
-
     [super removeFromSuperview];
 }
 
@@ -3916,16 +3868,6 @@
 
 #pragma mark -
 #pragma mark Attribution
-
-- (void)setHideAttribution:(BOOL)flag
-{
-    if (_hideAttribution == flag)
-        return;
-
-    _hideAttribution = flag;
-
-    [self layoutSubviews];
-}
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
 {

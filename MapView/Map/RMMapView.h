@@ -108,15 +108,6 @@ typedef enum : NSUInteger {
 
 @property (nonatomic, readonly) float adjustedZoomForRetinaDisplay; // takes adjustTilesForRetinaDisplay and screen scale into account
 
-/** @name Attributing Map Data */
-
-/** Whether to hide map data attribution for the map view.
-*
-*   If this is set to NO, a small disclosure button will be added to the lower-right of the map view, allowing the user to tap it to display a modal view showing map data attribution info. The modal presentation uses a page curl animation to reveal the attribution info under the map view.
-*
-*   The default value is NO, meaning that attribution info will be shown. Please ensure that the terms & conditions of any map data used in your application are satisfied before setting this value to YES. */
-@property (nonatomic, assign) BOOL hideAttribution;
-
 /** @name Fine-Tuning the Map Appearance */
 
 /** Take missing tiles from lower-numbered zoom levels, up to a given number of zoom levels. This can be used in order to increase perceived tile load performance or to allow zooming in beyond levels supported natively by a given tile source. Defaults to 1. */
