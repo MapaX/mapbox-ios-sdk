@@ -29,6 +29,39 @@
 
 static RMConfiguration *RMConfigurationSharedInstance = nil;
 
+@implementation NSURLRequest(synchronized)
+
++ (NSData *)sendSynchronousRequest:(NSURLRequest *)request
+    returningResponse:(__autoreleasing NSURLResponse **)responsePtr
+    error:(__autoreleasing NSError **)errorPtr {
+    dispatch_semaphore_t    sem;
+    __block NSData *        result;
+
+    result = nil;
+
+    sem = dispatch_semaphore_create(0);
+
+    [[[NSURLSession sharedSession] dataTaskWithRequest:request
+        completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (errorPtr != NULL) {
+            *errorPtr = error;
+        }
+        if (responsePtr != NULL) {
+            *responsePtr = response;
+        }
+        if (error == nil) {
+            result = data;
+        }
+        dispatch_semaphore_signal(sem);
+    }] resume];
+
+    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+
+   return result;
+}
+
+@end
+
 @implementation NSURLConnection (RMUserAgent)
 
 + (NSData *)sendBrandedSynchronousRequest:(NSURLRequest *)request returningResponse:(NSURLResponse **)response error:(NSError **)error
@@ -39,7 +72,8 @@ static RMConfiguration *RMConfigurationSharedInstance = nil;
 
     [newRequest setValue:[[RMConfiguration sharedInstance] userAgent] forHTTPHeaderField:@"User-Agent"];
 
-    return [NSURLConnection sendSynchronousRequest:newRequest returningResponse:response error:error];
+    
+    return [NSURLRequest sendSynchronousRequest:request returningResponse:response error:error];
 }
 
 @end
@@ -54,7 +88,7 @@ static RMConfiguration *RMConfigurationSharedInstance = nil;
 
     [request setValue:[[RMConfiguration sharedInstance] userAgent] forHTTPHeaderField:@"User-Agent"];
 
-    return [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+    return [NSURLRequest sendSynchronousRequest:request returningResponse:nil error:nil];
 }
 
 @end
@@ -69,7 +103,7 @@ static RMConfiguration *RMConfigurationSharedInstance = nil;
 
     [request setValue:[[RMConfiguration sharedInstance] userAgent] forHTTPHeaderField:@"User-Agent"];
 
-    NSData *returnData = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:error];
+    NSData *returnData = [NSURLRequest sendSynchronousRequest:request returningResponse:nil error:error];
 
     if ( ! returnData)
         return nil;

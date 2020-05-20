@@ -95,18 +95,6 @@ typedef enum : NSUInteger {
 
 - (void)createBarButtonItem
 {
-    if (RMPreVersion7)
-    {
-        _segmentedControl = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObject:@""]];
-        _segmentedControl.segmentedControlStyle = UISegmentedControlStyleBar;
-        [_segmentedControl setWidth:32.0 forSegmentAtIndex:0];
-        _segmentedControl.userInteractionEnabled = NO;
-        _segmentedControl.tintColor = self.tintColor;
-        _segmentedControl.center = self.customView.center;
-
-        [self.customView addSubview:_segmentedControl];
-    }
-
     _buttonImageView = [[UIImageView alloc] initWithImage:nil];
     _buttonImageView.contentMode = UIViewContentModeCenter;
     _buttonImageView.frame = CGRectMake(0, 0, 32, 32);
@@ -117,7 +105,7 @@ typedef enum : NSUInteger {
 
     [self.customView addSubview:_buttonImageView];
 
-    _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:(RMPreVersion7 ? UIActivityIndicatorViewStyleWhite : UIActivityIndicatorViewStyleGray)];
+    _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
     _activityView.hidesWhenStopped = YES;
     _activityView.center = self.customView.center;
     _activityView.userInteractionEnabled = NO;

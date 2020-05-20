@@ -469,7 +469,7 @@ static NSMutableDictionary *predicateValues = nil;
                            machine, @"machine",
                            [[UIDevice currentDevice] systemName], @"systemName",
                            [NSNumber numberWithFloat:[[[UIDevice currentDevice] systemVersion] floatValue]], @"systemVersion",
-                           [NSNumber numberWithInt:[[UIDevice currentDevice] userInterfaceIdiom]], @"userInterfaceIdiom",
+                           [NSNumber numberWithInt: (int) [[UIDevice currentDevice] userInterfaceIdiom]], @"userInterfaceIdiom",
                            nil];
 
         if ( ! ([machine isEqualToString:@"i386"] || [machine isEqualToString:@"x86_64"]))

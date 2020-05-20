@@ -241,12 +241,15 @@
                 CGContextSetFillColorWithColor(debugContext, [UIColor whiteColor].CGColor);
                 
                 NSString *debugString = [NSString stringWithFormat:@"Zoom %d", zoom];
-                CGSize debugSize1 = [debugString sizeWithFont:font];
-                [debugString drawInRect:CGRectMake(5.0, 5.0, debugSize1.width, debugSize1.height) withFont:font];
+                NSDictionary *attributes = @{NSFontAttributeName: [UIFont fontWithName:font.fontName size:font.pointSize]};
+
+                CGSize debugSize1 = [debugString sizeWithAttributes:attributes];
+
+                [debugString drawInRect:CGRectMake(5.0, 5.0, debugSize1.width, debugSize1.height) withAttributes:attributes];
                 
                 debugString = [NSString stringWithFormat:@"(%d, %d)", x, y];
-                CGSize debugSize2 = [debugString sizeWithFont:font];
-                [debugString drawInRect:CGRectMake(5.0, 5.0 + debugSize1.height + 5.0, debugSize2.width, debugSize2.height) withFont:font];
+                CGSize debugSize2 = [debugString sizeWithAttributes:attributes];
+                [debugString drawInRect:CGRectMake(5.0, 5.0 + debugSize1.height + 5.0, debugSize2.width, debugSize2.height) withAttributes:attributes];
                 
                 tileImage = UIGraphicsGetImageFromCurrentImageContext();
                 
