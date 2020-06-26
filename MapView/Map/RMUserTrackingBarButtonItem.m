@@ -64,12 +64,6 @@ typedef enum : NSUInteger {
 
 @implementation RMUserTrackingBarButtonItem
 
-@synthesize mapView = _mapView;
-@synthesize segmentedControl = _segmentedControl;
-@synthesize buttonImageView = _buttonImageView;
-@synthesize activityView = _activityView;
-@synthesize state = _state;
-
 - (id)initWithMapView:(RMMapView *)mapView
 {
     if ( ! (self = [super initWithCustomView:[[UIControl alloc] initWithFrame:CGRectMake(0, 0, 32, 32)]]))
@@ -95,26 +89,26 @@ typedef enum : NSUInteger {
 
 - (void)createBarButtonItem
 {
-    _buttonImageView = [[UIImageView alloc] initWithImage:nil];
-    _buttonImageView.contentMode = UIViewContentModeCenter;
-    _buttonImageView.frame = CGRectMake(0, 0, 32, 32);
-    _buttonImageView.center = self.customView.center;
-    _buttonImageView.userInteractionEnabled = NO;
+    self.buttonImageView = [[UIImageView alloc] initWithImage:nil];
+    self.buttonImageView.contentMode = UIViewContentModeCenter;
+    self.buttonImageView.frame = CGRectMake(0, 0, 32, 32);
+    self.buttonImageView.center = self.customView.center;
+    self.buttonImageView.userInteractionEnabled = NO;
 
     [self updateImage];
 
-    [self.customView addSubview:_buttonImageView];
+    [self.customView addSubview:self.buttonImageView];
 
-    _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    _activityView.hidesWhenStopped = YES;
-    _activityView.center = self.customView.center;
-    _activityView.userInteractionEnabled = NO;
+    self.activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    self.activityView.hidesWhenStopped = YES;
+    self.activityView.center = self.customView.center;
+    self.activityView.userInteractionEnabled = NO;
 
-    [self.customView addSubview:_activityView];
+    [self.customView addSubview:self.activityView];
 
     [((UIControl *)self.customView) addTarget:self action:@selector(changeMode:) forControlEvents:UIControlEventTouchUpInside];
 
-    _state = RMUserTrackingButtonStateNone;
+    self.state = RMUserTrackingButtonStateNone;
 
     [self updateSize:nil];
 
@@ -123,8 +117,8 @@ typedef enum : NSUInteger {
 
 - (void)dealloc
 {
-    [_mapView removeObserver:self forKeyPath:@"userTrackingMode"];
-    [_mapView removeObserver:self forKeyPath:@"userLocation.location"];
+    [self.mapView removeObserver:self forKeyPath:@"userTrackingMode"];
+    [self.mapView removeObserver:self forKeyPath:@"userLocation.location"];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillChangeStatusBarOrientationNotification object:nil];
 }
@@ -133,16 +127,16 @@ typedef enum : NSUInteger {
 
 - (void)setMapView:(RMMapView *)newMapView
 {
-    if ( ! [newMapView isEqual:_mapView])
+    if ( ! [newMapView isEqual:self.mapView])
     {
-        [_mapView removeObserver:self forKeyPath:@"userTrackingMode"];
-        [_mapView removeObserver:self forKeyPath:@"userLocation.location"];
+        [self.mapView removeObserver:self forKeyPath:@"userTrackingMode"];
+        [self.mapView removeObserver:self forKeyPath:@"userLocation.location"];
 
-        _mapView = newMapView;
-        [_mapView addObserver:self forKeyPath:@"userTrackingMode"      options:NSKeyValueObservingOptionNew context:nil];
-        [_mapView addObserver:self forKeyPath:@"userLocation.location" options:NSKeyValueObservingOptionNew context:nil];
+        self.mapView = newMapView;
+        [self.mapView addObserver:self forKeyPath:@"userTrackingMode"      options:NSKeyValueObservingOptionNew context:nil];
+        [self.mapView addObserver:self forKeyPath:@"userLocation.location" options:NSKeyValueObservingOptionNew context:nil];
 
-        _mapView.userTrackingBarButtonItem = self;
+        self.mapView.userTrackingBarButtonItem = self;
 
         [self updateState];
     }
@@ -153,7 +147,7 @@ typedef enum : NSUInteger {
     [super setTintColor:newTintColor];
 
     if (RMPreVersion7)
-        _segmentedControl.tintColor = newTintColor;
+        self.segmentedControl.tintColor = newTintColor;
     else
         [self updateImage];
 }
@@ -173,11 +167,11 @@ typedef enum : NSUInteger {
 
     CGFloat dimension = (UIInterfaceOrientationIsPortrait(orientation) ? (RMPostVersion7 ? 36 : 32) : 24);
 
-    self.customView.bounds = _buttonImageView.bounds = _segmentedControl.bounds = CGRectMake(0, 0, dimension, dimension);
-    [_segmentedControl setWidth:dimension forSegmentAtIndex:0];
+    self.customView.bounds = self.buttonImageView.bounds = self.segmentedControl.bounds = CGRectMake(0, 0, dimension, dimension);
+    [self.segmentedControl setWidth:dimension forSegmentAtIndex:0];
     self.width = dimension;
 
-    _segmentedControl.center = _buttonImageView.center = _activityView.center = CGPointMake(dimension / 2, dimension / 2 - (RMPostVersion7 ? 1 : 0));
+    self.segmentedControl.center = self.buttonImageView.center = self.activityView.center = CGPointMake(dimension / 2, dimension / 2 - (RMPostVersion7 ? 1 : 0));
 
     [self updateImage];
 }
@@ -186,10 +180,10 @@ typedef enum : NSUInteger {
 {
     if (RMPreVersion7)
     {
-        if (_mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
-            _buttonImageView.image = [RMMapView resourceImageNamed:@"TrackingHeading.png"];
+        if (self.mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
+            self.buttonImageView.image = [RMMapView resourceImageNamed:@"TrackingHeading.png"];
         else
-            _buttonImageView.image = [RMMapView resourceImageNamed:@"TrackingLocation.png"];
+            self.buttonImageView.image = [RMMapView resourceImageNamed:@"TrackingLocation.png"];
     }
     else
     {
@@ -201,11 +195,11 @@ typedef enum : NSUInteger {
 
         UIImage *image;
 
-        if (_mapView.userTrackingMode == RMUserTrackingModeNone || ! _mapView)
+        if (self.mapView.userTrackingMode == RMUserTrackingModeNone || ! self.mapView)
             image = [RMMapView resourceImageNamed:@"TrackingLocationOffMask.png"];
-        else if (_mapView.userTrackingMode == RMUserTrackingModeFollow)
+        else if (self.mapView.userTrackingMode == RMUserTrackingModeFollow)
             image = [RMMapView resourceImageNamed:@"TrackingLocationMask.png"];
-        else if (_mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
+        else if (self.mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
             image = [RMMapView resourceImageNamed:@"TrackingHeadingMask.png"];
 
         UIGraphicsPushContext(context);
@@ -216,7 +210,7 @@ typedef enum : NSUInteger {
         CGContextSetFillColorWithColor(context, self.tintColor.CGColor);
         CGContextFillRect(context, rect);
 
-        _buttonImageView.image = UIGraphicsGetImageFromCurrentImageContext();
+        self.buttonImageView.image = UIGraphicsGetImageFromCurrentImageContext();
 
         UIGraphicsEndImageContext();
 
@@ -231,7 +225,7 @@ typedef enum : NSUInteger {
         CGFloat onRadius  = 4.0;
         CGFloat offRadius = 0;
 
-        if (_mapView.userTrackingMode != RMUserTrackingModeNone && self.customView.layer.cornerRadius != onRadius)
+        if (self.mapView.userTrackingMode != RMUserTrackingModeNone && self.customView.layer.cornerRadius != onRadius)
         {
             backgroundColorAnimation.fromValue = (__bridge id)clearColor;
             backgroundColorAnimation.toValue   = (__bridge id)filledColor;
@@ -242,7 +236,7 @@ typedef enum : NSUInteger {
             self.customView.layer.backgroundColor = filledColor;
             self.customView.layer.cornerRadius    = onRadius;
         }
-        else if (_mapView.userTrackingMode == RMUserTrackingModeNone && self.customView.layer.cornerRadius != offRadius)
+        else if (self.mapView.userTrackingMode == RMUserTrackingModeNone && self.customView.layer.cornerRadius != offRadius)
         {
             backgroundColorAnimation.fromValue = (__bridge id)filledColor;
             backgroundColorAnimation.toValue   = (__bridge id)clearColor;
@@ -264,61 +258,66 @@ typedef enum : NSUInteger {
     // "selection" state
     //
     if (RMPreVersion7)
-        _segmentedControl.selectedSegmentIndex = (_mapView.userTrackingMode == RMUserTrackingModeNone ? UISegmentedControlNoSegment : 0);
+        self.segmentedControl.selectedSegmentIndex = (self.mapView.userTrackingMode == RMUserTrackingModeNone ? UISegmentedControlNoSegment : 0);
 
     // activity/image state
     //
-    if (_mapView.userTrackingMode != RMUserTrackingModeNone && ( ! _mapView.userLocation || ! _mapView.userLocation.location || (_mapView.userLocation.location.coordinate.latitude == 0 && _mapView.userLocation.location.coordinate.longitude == 0)))
+    if (self.mapView.userTrackingMode != RMUserTrackingModeNone && ( ! self.mapView.userLocation || ! self.mapView.userLocation.location || (self.mapView.userLocation.location.coordinate.latitude == 0 && self.mapView.userLocation.location.coordinate.longitude == 0)))
     {
         // if we should be tracking but don't yet have a location, show activity
         //
+        @weakify(self);
         [UIView animateWithDuration:0.25
                               delay:0.0
                             options:UIViewAnimationOptionBeginFromCurrentState
                          animations:^(void)
                          {
-                             _buttonImageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
-                             _activityView.transform    = CGAffineTransformMakeScale(0.01, 0.01);
+            @strongify(self);
+                             self.buttonImageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
+                             self.activityView.transform    = CGAffineTransformMakeScale(0.01, 0.01);
                          }
                          completion:^(BOOL finished)
                          {
-                             _buttonImageView.hidden = YES;
+            @strongify(self);
+                             self.buttonImageView.hidden = YES;
 
-                             [_activityView startAnimating];
+                             [self.activityView startAnimating];
 
                              [UIView animateWithDuration:0.25 animations:^(void)
                              {
-                                 _buttonImageView.transform = CGAffineTransformIdentity;
-                                 _activityView.transform    = CGAffineTransformIdentity;
+                                 @strongify(self);
+                                 self.buttonImageView.transform = CGAffineTransformIdentity;
+                                 self.activityView.transform    = CGAffineTransformIdentity;
                              }];
                          }];
 
-        _state = RMUserTrackingButtonStateActivity;
+        self.state = RMUserTrackingButtonStateActivity;
     }
     else
     {
-        if ((_mapView.userTrackingMode == RMUserTrackingModeNone              && _state != RMUserTrackingButtonStateNone)     ||
-            (_mapView.userTrackingMode == RMUserTrackingModeFollow            && _state != RMUserTrackingButtonStateLocation) ||
-            (_mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading && _state != RMUserTrackingButtonStateHeading))
+        if ((self.mapView.userTrackingMode == RMUserTrackingModeNone              && self.state != RMUserTrackingButtonStateNone)     ||
+            (self.mapView.userTrackingMode == RMUserTrackingModeFollow            && self.state != RMUserTrackingButtonStateLocation) ||
+            (self.mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading && self.state != RMUserTrackingButtonStateHeading))
         {
             // we'll always animate if leaving activity state
             //
-            __block BOOL animate = (_state == RMUserTrackingButtonStateActivity);
-
+            __block BOOL animate = (self.state == RMUserTrackingButtonStateActivity);
+            @weakify(self);
             [UIView animateWithDuration:0.25
                                   delay:0.0
                                 options:UIViewAnimationOptionBeginFromCurrentState
                              animations:^(void)
                              {
-                                 if (_state == RMUserTrackingButtonStateHeading &&
-                                     _mapView.userTrackingMode != RMUserTrackingModeFollowWithHeading)
+                @strongify(self);
+                                 if (self.state == RMUserTrackingButtonStateHeading &&
+                                     self.mapView.userTrackingMode != RMUserTrackingModeFollowWithHeading)
                                  {
                                      // coming out of heading mode
                                      //
                                      animate = YES;
                                  }
-                                 else if ((_state != RMUserTrackingButtonStateHeading) &&
-                                          _mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
+                                 else if ((self.state != RMUserTrackingButtonStateHeading) &&
+                                          self.mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
                                  {
                                      // going into heading mode
                                      //
@@ -326,65 +325,67 @@ typedef enum : NSUInteger {
                                  }
 
                                  if (animate)
-                                     _buttonImageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
+                                     self.buttonImageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
 
-                                 if (_state == RMUserTrackingButtonStateActivity)
-                                     _activityView.transform = CGAffineTransformMakeScale(0.01, 0.01);
+                                 if (self.state == RMUserTrackingButtonStateActivity)
+                                     self.activityView.transform = CGAffineTransformMakeScale(0.01, 0.01);
                              }
                              completion:^(BOOL finished)
                              {
+                @strongify(self);
                                  [self updateImage];
 
-                                 _buttonImageView.hidden = NO;
+                                 self.buttonImageView.hidden = NO;
 
-                                 if (_state == RMUserTrackingButtonStateActivity)
-                                     [_activityView stopAnimating];
+                                 if (self.state == RMUserTrackingButtonStateActivity)
+                                     [self.activityView stopAnimating];
 
                                  [UIView animateWithDuration:0.25 animations:^(void)
                                  {
+                                     @strongify(self);
                                      if (animate)
-                                         _buttonImageView.transform = CGAffineTransformIdentity;
+                                         self.buttonImageView.transform = CGAffineTransformIdentity;
 
-                                     if (_state == RMUserTrackingButtonStateActivity)
-                                         _activityView.transform = CGAffineTransformIdentity;
+                                     if (self.state == RMUserTrackingButtonStateActivity)
+                                         self.activityView.transform = CGAffineTransformIdentity;
                                  }];
                              }];
 
-            if (_mapView.userTrackingMode == RMUserTrackingModeNone)
-                _state = RMUserTrackingButtonStateNone;
-            else if (_mapView.userTrackingMode == RMUserTrackingModeFollow)
-                _state = RMUserTrackingButtonStateLocation;
-            else if (_mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
-                _state = RMUserTrackingButtonStateHeading;
+            if (self.mapView.userTrackingMode == RMUserTrackingModeNone)
+                self.state = RMUserTrackingButtonStateNone;
+            else if (self.mapView.userTrackingMode == RMUserTrackingModeFollow)
+                self.state = RMUserTrackingButtonStateLocation;
+            else if (self.mapView.userTrackingMode == RMUserTrackingModeFollowWithHeading)
+                self.state = RMUserTrackingButtonStateHeading;
         }
     }
 }
 
 - (void)changeMode:(id)sender
 {
-    if (_mapView)
+    if (self.mapView)
     {
-        switch (_mapView.userTrackingMode)
+        switch (self.mapView.userTrackingMode)
         {
             case RMUserTrackingModeNone:
             default:
             {
-                _mapView.userTrackingMode = RMUserTrackingModeFollow;
+                self.mapView.userTrackingMode = RMUserTrackingModeFollow;
                 
                 break;
             }
             case RMUserTrackingModeFollow:
             {
                 if ([CLLocationManager headingAvailable])
-                    _mapView.userTrackingMode = RMUserTrackingModeFollowWithHeading;
+                    self.mapView.userTrackingMode = RMUserTrackingModeFollowWithHeading;
                 else
-                    _mapView.userTrackingMode = RMUserTrackingModeNone;
+                    self.mapView.userTrackingMode = RMUserTrackingModeNone;
 
                 break;
             }
             case RMUserTrackingModeFollowWithHeading:
             {
-                _mapView.userTrackingMode = RMUserTrackingModeNone;
+                self.mapView.userTrackingMode = RMUserTrackingModeNone;
 
                 break;
             }

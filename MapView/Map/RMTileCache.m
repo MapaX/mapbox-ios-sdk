@@ -61,7 +61,7 @@
     NSOperationQueue *_backgroundFetchQueue;
 }
 
-@synthesize backgroundCacheDelegate=_backgroundCacheDelegate;
+@synthesize backgroundCacheDelegate;
 
 - (id)initWithExpiryPeriod:(NSTimeInterval)period
 {
@@ -74,7 +74,7 @@
     _memoryCache = nil;
     _expiryPeriod = period;
     
-    _backgroundCacheDelegate = nil;
+    self.backgroundCacheDelegate = nil;
     _activeTileSource = nil;
     _backgroundFetchQueue = nil;
 
@@ -349,9 +349,9 @@
     CLLocationDegrees minCacheLon = southWest.longitude;
     CLLocationDegrees maxCacheLon = northEast.longitude;
 
-    if ([_backgroundCacheDelegate respondsToSelector:@selector(tileCache:didBeginBackgroundCacheWithCount:forTileSource:)])
+    if ([self.backgroundCacheDelegate respondsToSelector:@selector(tileCache:didBeginBackgroundCacheWithCount:forTileSource:)])
     {
-        [_backgroundCacheDelegate tileCache:self
+        [self.backgroundCacheDelegate tileCache:self
            didBeginBackgroundCacheWithCount:totalTiles
                               forTileSource:_activeTileSource];
     }
@@ -378,16 +378,17 @@
 
                 __weak RMTileCacheDownloadOperation *internalOperation = operation;
                 __weak RMTileCache *weakSelf = self;
-
+                @weakify(self);
                 [operation setCompletionBlock:^(void)
                 {
+                    @strongify(self);
                     if ( ! [internalOperation isCancelled])
                     {
                         progTile++;
 
-                        if ([_backgroundCacheDelegate respondsToSelector:@selector(tileCache:didBackgroundCacheTile:withIndex:ofTotalTileCount:)])
+                        if ([self.backgroundCacheDelegate respondsToSelector:@selector(tileCache:didBackgroundCacheTile:withIndex:ofTotalTileCount:)])
                         {
-                            [_backgroundCacheDelegate tileCache:weakSelf
+                            [self.backgroundCacheDelegate tileCache:weakSelf
                                          didBackgroundCacheTile:RMTileMake((uint32_t)x, (uint32_t)y, zoom)
                                                       withIndex:progTile
                                                ofTotalTileCount:totalTiles];
@@ -399,18 +400,18 @@
                             {
                                 [weakSelf markCachingComplete];
 
-                                if ([_backgroundCacheDelegate respondsToSelector:@selector(tileCacheDidFinishBackgroundCache:)])
+                                if ([self.backgroundCacheDelegate respondsToSelector:@selector(tileCacheDidFinishBackgroundCache:)])
                                 {
-                                    [_backgroundCacheDelegate tileCacheDidFinishBackgroundCache:weakSelf];
+                                    [self.backgroundCacheDelegate tileCacheDidFinishBackgroundCache:weakSelf];
                                 }
                             });
                         }
                     }
                     else
                     {
-                        if ([_backgroundCacheDelegate respondsToSelector:@selector(tileCache:didReceiveError:whenCachingTile:)])
+                        if ([self.backgroundCacheDelegate respondsToSelector:@selector(tileCache:didReceiveError:whenCachingTile:)])
                         {
-                            [_backgroundCacheDelegate tileCache:weakSelf
+                            [self.backgroundCacheDelegate tileCache:weakSelf
                                                 didReceiveError:internalOperation.error
                                                 whenCachingTile:RMTileMake((uint32_t)x, (uint32_t)y, zoom)];
                         }
@@ -437,9 +438,9 @@
 
             if ([weakSelf markCachingComplete])
             {
-                if ([_backgroundCacheDelegate respondsToSelector:@selector(tileCacheDidCancelBackgroundCache:)])
+                if ([self.backgroundCacheDelegate respondsToSelector:@selector(tileCacheDidCancelBackgroundCache:)])
                 {
-                    [_backgroundCacheDelegate tileCacheDidCancelBackgroundCache:weakSelf];
+                    [self.backgroundCacheDelegate tileCacheDidCancelBackgroundCache:weakSelf];
                 }
             }
         });
