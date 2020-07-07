@@ -19,7 +19,7 @@
 
 #define IS_VALID_TILE_IMAGE(image) (image != nil && [image isKindOfClass:[UIImage class]] && ![[RMTileImage errorTile] isEqual:tileImage])
 
-@interface RMMapSingleTiledLayerView(Private)
+@interface RMMapSingleTiledLayerView()
 @property(nonatomic, weak) RMMapView *mapView;
 @property(nonatomic)NSArray* tileSources;
 @end
