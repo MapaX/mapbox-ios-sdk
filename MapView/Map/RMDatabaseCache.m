@@ -45,9 +45,9 @@
 @property(nonatomic) NSRecursiveLock *writeQueueLock;
 // Cache
 @property(nonatomic) RMCachePurgeStrategy purgeStrategy;
-@property(nonatomic)NSUInteger capacity;
-@property(nonatomic)NSUInteger minimalPurge;
-@property(nonatomic)NSTimeInterval expiryPeriod;
+@property (nonatomic, readwrite, assign) NSUInteger intCapacity;
+@property(nonatomic) NSUInteger minimalPurge;
+@property(nonatomic) NSTimeInterval expiryPeriod;
 @end
 
 #pragma mark -
@@ -158,17 +158,17 @@
 
 - (void)setPurgeStrategy:(RMCachePurgeStrategy)theStrategy
 {
-	self.purgeStrategy = theStrategy;
+	_purgeStrategy = theStrategy;
 }
 
 - (void)setCapacity:(NSUInteger)theCapacity
 {
-	self.capacity = theCapacity;
+	_intCapacity = theCapacity;
 }
 
 - (NSUInteger)capacity
 {
-    return self.capacity;
+    return self.intCapacity;
 }
 
 - (void)setMinimalPurge:(NSUInteger)theMinimalPurge
@@ -178,7 +178,7 @@
 
 - (void)setExpiryPeriod:(NSTimeInterval)theExpiryPeriod
 {
-    self.expiryPeriod = theExpiryPeriod;
+    _expiryPeriod = theExpiryPeriod;
     
     srand((unsigned int)time(NULL));
 }
