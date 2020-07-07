@@ -38,7 +38,7 @@
 
 #import "RMTileCacheDownloadOperation.h"
 
-@interface RMTileCache (Configuration)
+@interface RMTileCache ()
 
 - (id <RMTileCache>)memoryCacheWithConfig:(NSDictionary *)cfg;
 - (id <RMTileCache>)databaseCacheWithConfig:(NSDictionary *)cfg;

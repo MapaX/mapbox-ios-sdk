@@ -1440,7 +1440,7 @@
         _loadingTileView.mapZooming = YES;
 }
 
-- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale
+- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(CGFloat)scale
 {
     [self completeMoveEventAfterDelay:0];
     [self completeZoomEventAfterDelay:0];
