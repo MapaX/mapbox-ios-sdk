@@ -173,7 +173,7 @@
 
 - (void)setMinimalPurge:(NSUInteger)theMinimalPurge
 {
-	self.minimalPurge = theMinimalPurge;
+	_minimalPurge = theMinimalPurge;
 }
 
 - (void)setExpiryPeriod:(NSTimeInterval)theExpiryPeriod
