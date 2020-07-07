@@ -67,7 +67,7 @@
 
 #pragma mark --- end constants ----
 
-@interface RMMapView (PrivateMethods) <UIScrollViewDelegate,
+@interface RMMapView () <UIScrollViewDelegate,
                                        UIGestureRecognizerDelegate,
                                        RMMapScrollViewDelegate,
                                        CLLocationManagerDelegate,
@@ -76,7 +76,7 @@
                                        UIViewControllerTransitioningDelegate,
                                        UIViewControllerAnimatedTransitioning>
 
-@property (nonatomic, retain) RMUserLocation *userLocation;
+@property (nonatomic, strong) RMUserLocation *userLocation;
 
 - (void)createMapView;
 
@@ -91,10 +91,10 @@
 
 - (void)updateHeadingForDeviceOrientation;
 
-@property(nonatomic) RMMapScrollView *mapScrollView;
+@property(nonatomic, strong) RMMapScrollView *mapScrollView;
 @property(nonatomic) BOOL mapScrollViewIsZooming;
-@property(nonatomic) UIImageView *userHeadingTrackingView;
-@property(nonatomic) UIButton *compassButton;
+@property(nonatomic, strong) UIImageView *userHeadingTrackingView;
+@property(nonatomic, strong) UIButton *compassButton;
 @property(nonatomic) CGAffineTransform mapTransform;
 @property(nonatomic) CATransform3D annotationTransform;
 @property(nonatomic) RMMapOverlayView *overlayView;
@@ -432,7 +432,7 @@
     [super setFrame:frame];
 
     // only change if the frame changes and not during initialization
-    if ( ! CGRectEqualToRect(r, frame) && self.mapScrollView != nil)
+    if ( ! CGRectEqualToRect(r, frame) && _mapScrollView != nil)
     {
         RMProjectedPoint centerPoint = self.centerProjectedPoint;
 
