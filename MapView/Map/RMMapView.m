@@ -432,7 +432,7 @@
     [super setFrame:frame];
 
     // only change if the frame changes and not during initialization
-    if ( ! CGRectEqualToRect(r, frame))
+    if ( ! CGRectEqualToRect(r, frame) && self.mapScrollView != nil)
     {
         RMProjectedPoint centerPoint = self.centerProjectedPoint;
 
