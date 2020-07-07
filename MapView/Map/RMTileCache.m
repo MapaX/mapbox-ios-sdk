@@ -43,11 +43,13 @@
 - (id <RMTileCache>)memoryCacheWithConfig:(NSDictionary *)cfg;
 - (id <RMTileCache>)databaseCacheWithConfig:(NSDictionary *)cfg;
 
+@property(nonatomic) NSMutableArray *privateTileCaches;
+
 @end
 
 @implementation RMTileCache
 {
-    NSMutableArray *_tileCaches;
+
 
     // The memory cache, if we have one
     // This one has its own variable because we want to propagate cache hits down in
@@ -68,7 +70,7 @@
     if (!(self = [super init]))
         return nil;
 
-    _tileCaches = [NSMutableArray new];
+    self.privateTileCaches = [NSMutableArray new];
     _tileCacheQueue = dispatch_queue_create("routeme.tileCacheQueue", DISPATCH_QUEUE_CONCURRENT);
 
     _memoryCache = nil;
@@ -103,7 +105,7 @@
                 newCache = [self databaseCacheWithConfig:cfg];
 
             if (newCache)
-                [_tileCaches addObject:newCache];
+                [self.privateTileCaches addObject:newCache];
             else
                 RMLog(@"failed to create cache of type %@", type);
 
@@ -128,10 +130,13 @@
 {
     if (self.isBackgroundCaching)
         [self cancelBackgroundCache];
-    
+    @weakify(self);
+    @weakify(_memoryCache);
     dispatch_barrier_sync(_tileCacheQueue, ^{
+        @strongify(self);
+        @strongify(_memoryCache);
          _memoryCache = nil;
-         _tileCaches = nil;
+         self.privateTileCaches = nil;
     });
     
 #if ! OS_OBJECT_USE_OBJC
@@ -141,24 +146,28 @@
 
 - (void)addCache:(id <RMTileCache>)cache
 {
+    @weakify(self);
     dispatch_barrier_async(_tileCacheQueue, ^{
-        [_tileCaches addObject:cache];
+        @strongify(self);
+        [self.privateTileCaches addObject:cache];
     });
 }
 
 - (void)insertCache:(id <RMTileCache>)cache atIndex:(NSUInteger)index
 {
+    @weakify(self);
     dispatch_barrier_async(_tileCacheQueue, ^{
-        if (index >= [_tileCaches count])
-            [_tileCaches addObject:cache];
+        @strongify(self);
+        if (index >= [self.privateTileCaches count])
+            [self.privateTileCaches addObject:cache];
         else
-            [_tileCaches insertObject:cache atIndex:index];
+            [self.privateTileCaches insertObject:cache atIndex:index];
     });
 }
 
 - (NSArray *)tileCaches
 {
-    return [NSArray arrayWithArray:_tileCaches];
+    return [NSArray arrayWithArray:self.privateTileCaches];
 }
 
 + (NSNumber *)tileHash:(RMTile)tile
@@ -180,10 +189,10 @@
 
     if (image)
         return image;
-
+    @weakify(_memoryCache);
     dispatch_sync(_tileCacheQueue, ^{
-
-        for (id <RMTileCache> cache in _tileCaches)
+        @strongify(_memoryCache);
+        for (id <RMTileCache> cache in self.privateTileCaches)
         {
             image = [cache cachedImage:tile withCacheKey:aCacheKey];
 
@@ -205,10 +214,10 @@
         return;
 
     [_memoryCache addImage:image forTile:tile withCacheKey:aCacheKey];
-
+    @weakify(self);
     dispatch_sync(_tileCacheQueue, ^{
-
-        for (id <RMTileCache> cache in _tileCaches)
+        @strongify(self);
+        for (id <RMTileCache> cache in self.privateTileCaches)
         {	
             if ([cache respondsToSelector:@selector(addImage:forTile:withCacheKey:)])
                 [cache addImage:image forTile:tile withCacheKey:aCacheKey];
@@ -222,9 +231,10 @@
     if (!data || !aCacheKey)
         return;
 
+    @weakify(self);
     dispatch_sync(_tileCacheQueue, ^{
-
-        for (id <RMTileCache> cache in _tileCaches)
+        @strongify(self);
+        for (id <RMTileCache> cache in self.privateTileCaches)
         {
             if ([cache respondsToSelector:@selector(addDiskCachedImageData:forTile:withCacheKey:)])
                 [cache addDiskCachedImageData:data forTile:tile withCacheKey:aCacheKey];
@@ -239,9 +249,11 @@
 
     [_memoryCache didReceiveMemoryWarning];
 
+    @weakify(self);
     dispatch_sync(_tileCacheQueue, ^{
+        @strongify(self);
 
-        for (id<RMTileCache> cache in _tileCaches)
+        for (id<RMTileCache> cache in self.privateTileCaches)
         {
             [cache didReceiveMemoryWarning];
         }
@@ -253,9 +265,11 @@
 {
     [_memoryCache removeAllCachedImages];
 
+    @weakify(self);
     dispatch_sync(_tileCacheQueue, ^{
+        @strongify(self);
 
-        for (id<RMTileCache> cache in _tileCaches)
+        for (id<RMTileCache> cache in self.privateTileCaches)
         {
             [cache removeAllCachedImages];
         }
@@ -267,9 +281,11 @@
 {
     [_memoryCache removeAllCachedImagesForCacheKey:cacheKey];
 
+    @weakify(self);
     dispatch_sync(_tileCacheQueue, ^{
+        @strongify(self);
 
-        for (id<RMTileCache> cache in _tileCaches)
+        for (id<RMTileCache> cache in self.privateTileCaches)
         {
             [cache removeAllCachedImagesForCacheKey:cacheKey];
         }
@@ -446,12 +462,6 @@
         });
     });
 }
-
-@end
-
-#pragma mark -
-
-@implementation RMTileCache (Configuration)
 
 static NSMutableDictionary *predicateValues = nil;
 

@@ -99,6 +99,8 @@
 @property(nonatomic) CATransform3D annotationTransform;
 @property(nonatomic) RMMapOverlayView *overlayView;
 
+@property(nonatomic) NSMutableSet *mapAnnotations;
+
 @end
 
 #pragma mark -
@@ -175,7 +177,6 @@
 
     NSMutableArray *_earlyTileSources;
 
-    NSMutableSet *_annotations;
     NSMutableSet *_visibleAnnotations;
 
     BOOL _constrainMovement, _constrainMovementByUser;
@@ -273,7 +274,7 @@
     _orderMarkersByYPosition = YES;
     _orderClusterMarkersAboveOthers = YES;
 
-    _annotations = [NSMutableSet new];
+    self.mapAnnotations = [NSMutableSet new];
     _visibleAnnotations = [NSMutableSet new];
     [self setQuadTree:[[RMQuadTree alloc] initWithMapView:self]];
     _clusteringEnabled = NO;
@@ -3034,11 +3035,11 @@
     {
         CALayer *lastLayer = nil;
 
-        @synchronized (_annotations)
+        @synchronized (self.mapAnnotations)
         {
             if (correctAllAnnotations)
             {
-                for (RMAnnotation *annotation in _annotations)
+                for (RMAnnotation *annotation in self.mapAnnotations)
                 {
                     [self correctScreenPosition:annotation animated:animated];
 
@@ -3195,7 +3196,7 @@
 
 - (NSArray *)annotations
 {
-    return [_annotations allObjects];
+    return [self.mapAnnotations allObjects];
 }
 
 - (NSArray *)visibleAnnotations
@@ -3208,12 +3209,12 @@
     if ( ! annotation)
         return;
 
-    @synchronized (_annotations)
+    @synchronized (self.mapAnnotations)
     {
-        if ([_annotations containsObject:annotation])
+        if ([self.mapAnnotations containsObject:annotation])
             return;
 
-        [_annotations addObject:annotation];
+        [self.mapAnnotations addObject:annotation];
         [self.quadTree addAnnotation:annotation];
     }
 
@@ -3243,9 +3244,9 @@
     if ( ! newAnnotations || ! [newAnnotations count])
         return;
 
-    @synchronized (_annotations)
+    @synchronized (self.mapAnnotations)
     {
-        [_annotations addObjectsFromArray:newAnnotations];
+        [self.mapAnnotations addObjectsFromArray:newAnnotations];
         [self.quadTree addAnnotations:newAnnotations];
     }
 
@@ -3254,9 +3255,9 @@
 
 - (void)removeAnnotation:(RMAnnotation *)annotation
 {
-    @synchronized (_annotations)
+    @synchronized (self.mapAnnotations)
     {
-        [_annotations removeObject:annotation];
+        [self.mapAnnotations removeObject:annotation];
         [_visibleAnnotations removeObject:annotation];
         [self.quadTree removeAnnotation:annotation];
         annotation.layer = nil;
@@ -3267,13 +3268,13 @@
 
 - (void)removeAnnotations:(NSArray *)annotationsToRemove
 {
-    @synchronized (_annotations)
+    @synchronized (self.mapAnnotations)
     {
         for (RMAnnotation *annotation in annotationsToRemove)
         {
             if ( ! annotation.isUserLocationAnnotation)
             {
-                [_annotations removeObject:annotation];
+                [self.mapAnnotations removeObject:annotation];
                 [_visibleAnnotations removeObject:annotation];
                 [self.quadTree removeAnnotation:annotation];
                 annotation.layer = nil;
@@ -3286,7 +3287,7 @@
 
 - (void)removeAllAnnotations
 {
-    [self removeAnnotations:[_annotations allObjects]];
+    [self removeAnnotations:[self.mapAnnotations allObjects]];
 }
 
 - (CGPoint)mapPositionForAnnotation:(RMAnnotation *)annotation
@@ -3420,11 +3421,13 @@
             [CATransaction setAnimationDuration:0.5];
             [CATransaction setAnimationTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
             @weakify(self);
+
             [UIView animateWithDuration:(animated ? 0.5 : 0.0)
                                   delay:0.0
                                 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationCurveEaseInOut
                              animations:^(void)
                              {
+                
                 @strongify(self);
                                  self.mapTransform = CGAffineTransformIdentity;
                                  self.annotationTransform = CATransform3DIdentity;
@@ -3435,7 +3438,7 @@
 
                                  self.compassButton.alpha = 0;
 
-                                 for (RMAnnotation *annotation in _annotations)
+                                 for (RMAnnotation *annotation in self.mapAnnotations)
                                      if ([annotation.layer isKindOfClass:[RMMarker class]])
                                          annotation.layer.transform = self.annotationTransform;
                              }
@@ -3465,12 +3468,15 @@
 
             [CATransaction setAnimationDuration:0.5];
             [CATransaction setAnimationTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+            @weakify(self);
 
             [UIView animateWithDuration:(animated ? 0.5 : 0.0)
                                   delay:0.0
                                 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationCurveEaseInOut
                              animations:^(void)
                              {
+                
+                @strongify(self);
                                  self.mapTransform = CGAffineTransformIdentity;
                                  self.annotationTransform = CATransform3DIdentity;
 
@@ -3480,7 +3486,7 @@
 
                                  self.compassButton.alpha = 0;
 
-                                 for (RMAnnotation *annotation in _annotations)
+                                 for (RMAnnotation *annotation in self.mapAnnotations)
                                      if ([annotation.layer isKindOfClass:[RMMarker class]])
                                          annotation.layer.transform = self.annotationTransform;
                              }
@@ -3700,7 +3706,7 @@
 
     _trackingHaloAnnotation.layer.hidden = ( ! CLLocationCoordinate2DIsValid(self.userLocation.coordinate) || newLocation.horizontalAccuracy > 10 || self.userLocation.hasCustomLayer);
 
-    if ( ! [_annotations containsObject:self.userLocation])
+    if ( ! [self.mapAnnotations containsObject:self.userLocation])
         [self addAnnotation:self.userLocation];
 }
 
@@ -3748,6 +3754,8 @@
                             options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationCurveEaseInOut
                          animations:^(void)
                          {
+            
+            @strongify(self);
                              CGFloat angle = (M_PI / -180) * headingDirection;
 
                              self.mapTransform = CGAffineTransformMakeRotation(angle);
@@ -3759,7 +3767,7 @@
 
                              self.compassButton.alpha = 1.0;
 
-                             for (RMAnnotation *annotation in _annotations)
+                             for (RMAnnotation *annotation in self.mapAnnotations)
                                  if ([annotation.layer isKindOfClass:[RMMarker class]])
                                      annotation.layer.transform = self.annotationTransform;
 

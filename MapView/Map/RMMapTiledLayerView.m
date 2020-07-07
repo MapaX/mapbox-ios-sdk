@@ -39,14 +39,17 @@
 
 #define IS_VALID_TILE_IMAGE(image) (image != nil && [image isKindOfClass:[UIImage class]])
 
+@interface RMMapTiledLayerView(private)
+@property(nonatomic, weak) RMMapView *mapView;
+@property(nonatomic) id <RMTileSource> tileSource;
+@end
+
 @implementation RMMapTiledLayerView
 {
-    __weak RMMapView *_mapView;
-    id <RMTileSource> _tileSource;
+
 }
 
 @synthesize useSnapshotRenderer = _useSnapshotRenderer;
-@synthesize tileSource = _tileSource;
 
 + (Class)layerClass
 {
@@ -65,14 +68,14 @@
 
     self.opaque = NO;
 
-    _mapView = aMapView;
-    _tileSource = aTileSource;
+    self.mapView = aMapView;
+    self.tileSource = aTileSource;
 
     self.useSnapshotRenderer = NO;
 
     CATiledLayer *tiledLayer = [self tiledLayer];
-    size_t levelsOf2xMagnification = _mapView.tileSourcesMaxZoom;
-    if (_mapView.adjustTilesForRetinaDisplay && _mapView.screenScale > 1.0) levelsOf2xMagnification += 1;
+    size_t levelsOf2xMagnification = self.mapView.tileSourcesMaxZoom;
+    if (self.mapView.adjustTilesForRetinaDisplay && self.mapView.screenScale > 1.0) levelsOf2xMagnification += 1;
     tiledLayer.levelsOfDetail = levelsOf2xMagnification;
     tiledLayer.levelsOfDetailBias = levelsOf2xMagnification;
 
@@ -81,9 +84,9 @@
 
 - (void)dealloc
 {
-    [_tileSource cancelAllDownloads];
+    [self.tileSource cancelAllDownloads];
     self.layer.contents = nil;
-     _mapView = nil;
+     self.mapView = nil;
 }
 
 - (void)didMoveToWindow
@@ -101,7 +104,7 @@
 
     if (self.useSnapshotRenderer)
     {
-        zoom = (short)ceilf(_mapView.adjustedZoomForRetinaDisplay);
+        zoom = (short)ceilf(self.mapView.adjustedZoomForRetinaDisplay);
         CGFloat rectSize = bounds.size.width / powf(2.0, (float)zoom);
 
         int x1 = floor(rect.origin.x / rectSize),
@@ -111,7 +114,7 @@
 
 //        NSLog(@"Tiles from x1:%d, y1:%d to x2:%d, y2:%d @ zoom %d", x1, y1, x2, y2, zoom);
 
-        if (zoom >= _tileSource.minZoom && zoom <= _tileSource.maxZoom)
+        if (zoom >= self.tileSource.minZoom && zoom <= self.tileSource.maxZoom)
         {
             UIGraphicsPushContext(context);
 
@@ -119,7 +122,7 @@
             {
                 for (int y=y1; y<=y2; ++y)
                 {
-                    UIImage *tileImage = [_tileSource imageForTile:RMTileMake(x, y, zoom) inCache:[_mapView tileCache]];
+                    UIImage *tileImage = [self.tileSource imageForTile:RMTileMake(x, y, zoom) inCache:[self.mapView tileCache]];
 
                     if (IS_VALID_TILE_IMAGE(tileImage))
                         [tileImage drawInRect:CGRectMake(x * rectSize, y * rectSize, rectSize, rectSize)];
@@ -134,7 +137,7 @@
         int x = floor(rect.origin.x / rect.size.width),
             y = floor(fabs(rect.origin.y / rect.size.height));
 
-        if (_mapView.adjustTilesForRetinaDisplay && _mapView.screenScale > 1.0)
+        if (self.mapView.adjustTilesForRetinaDisplay && self.mapView.screenScale > 1.0)
         {
             zoom--;
             x >>= 1;
@@ -147,40 +150,42 @@
 
         UIImage *tileImage = nil;
 
-        if (zoom >= _tileSource.minZoom && zoom <= _tileSource.maxZoom)
+        if (zoom >= self.tileSource.minZoom && zoom <= self.tileSource.maxZoom)
         {
             RMDatabaseCache *databaseCache = nil;
 
-            for (RMTileCache *componentCache in _mapView.tileCache.tileCaches)
+            for (RMTileCache *componentCache in self.mapView.tileCache.tileCaches)
                 if ([componentCache isKindOfClass:[RMDatabaseCache class]])
                     databaseCache = (RMDatabaseCache *)componentCache;
 
-            if ( ! [_tileSource isKindOfClass:[RMAbstractWebMapSource class]] || ! databaseCache || ! databaseCache.capacity)
+            if ( ! [self.tileSource isKindOfClass:[RMAbstractWebMapSource class]] || ! databaseCache || ! databaseCache.capacity)
             {
                 // for non-web tiles, query the source directly since trivial blocking
                 //
-                tileImage = [_tileSource imageForTile:RMTileMake(x, y, zoom) inCache:[_mapView tileCache]];
+                tileImage = [self.tileSource imageForTile:RMTileMake(x, y, zoom) inCache:[self.mapView tileCache]];
             }
             else
             {
                 // for non-local tiles, consult cache directly first (if possible)
                 //
-                if (_tileSource.isCacheable)
-                    tileImage = [[_mapView tileCache] cachedImage:RMTileMake(x, y, zoom) withCacheKey:[_tileSource uniqueTilecacheKey]];
+                if (self.tileSource.isCacheable)
+                    tileImage = [[self.mapView tileCache] cachedImage:RMTileMake(x, y, zoom) withCacheKey:[self.tileSource uniqueTilecacheKey]];
 
                 if ( ! tileImage)
                 {
                     // fire off an asynchronous retrieval
                     //
+                    @weakify(self)
                     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
                     {
                         // ensure only one request for a URL at a time
                         //
-                        @synchronized ([(RMAbstractWebMapSource *)_tileSource URLsForTile:RMTileMake(x, y, zoom)])
+                        @strongify(self);
+                        @synchronized ([(RMAbstractWebMapSource *)self.tileSource URLsForTile:RMTileMake(x, y, zoom)])
                         {
                             // this will return quicker if cached since above attempt, else block on fetch
                             //
-                            if (_tileSource.isCacheable && [_tileSource imageForTile:RMTileMake(x, y, zoom) inCache:[_mapView tileCache]])
+                            if (self.tileSource.isCacheable && [self.tileSource imageForTile:RMTileMake(x, y, zoom) inCache:[self.mapView tileCache]])
                             {
                                 dispatch_async(dispatch_get_main_queue(), ^(void)
                                 {
@@ -197,7 +202,7 @@
 
         if ( ! tileImage)
         {
-            if (_mapView.missingTilesDepth == 0)
+            if (self.mapView.missingTilesDepth == 0)
             {
                 tileImage = [RMTileImage errorTile];
             }
@@ -206,14 +211,14 @@
                 NSUInteger currentTileDepth = 1, currentZoom = zoom - currentTileDepth;
 
                 // tries to return lower zoom level tiles if a tile cannot be found
-                while ( !tileImage && currentZoom >= _tileSource.minZoom && currentTileDepth <= _mapView.missingTilesDepth)
+                while ( !tileImage && currentZoom >= self.tileSource.minZoom && currentTileDepth <= self.mapView.missingTilesDepth)
                 {
                     float nextX = x / powf(2.0, (float)currentTileDepth),
                           nextY = y / powf(2.0, (float)currentTileDepth);
                     float nextTileX = floor(nextX),
                           nextTileY = floor(nextY);
 
-                    tileImage = [_tileSource imageForTile:RMTileMake((int)nextTileX, (int)nextTileY, currentZoom) inCache:[_mapView tileCache]];
+                    tileImage = [self.tileSource imageForTile:RMTileMake((int)nextTileX, (int)nextTileY, currentZoom) inCache:[self.mapView tileCache]];
 
                     if (IS_VALID_TILE_IMAGE(tileImage))
                     {
@@ -244,7 +249,7 @@
 
         if (IS_VALID_TILE_IMAGE(tileImage))
         {
-            if (_mapView.adjustTilesForRetinaDisplay && _mapView.screenScale > 1.0)
+            if (self.mapView.adjustTilesForRetinaDisplay && self.mapView.screenScale > 1.0)
             {
                 // Crop the image
                 float xCrop = (floor(rect.origin.x / rect.size.width) / 2.0) - x;
@@ -260,7 +265,7 @@
                 CGImageRelease(imageRef);
             }
 
-            if (_mapView.debugTiles)
+            if (self.mapView.debugTiles)
             {
                 UIGraphicsBeginImageContext(tileImage.size);
 

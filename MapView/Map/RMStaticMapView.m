@@ -111,13 +111,13 @@
 
     if (handler)
     {
-        _weakSelf = self;
-
+        @weakify(self);
         dispatch_async(tileSource.dataQueue, ^(void)
         {
             dispatch_sync(dispatch_get_main_queue(), ^(void)
             {
-                UIImage *image = [_weakSelf takeSnapshot];
+                @strongify(self);
+                UIImage *image = [self takeSnapshot];
 
                 handler(image);
             });

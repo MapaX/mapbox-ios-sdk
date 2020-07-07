@@ -91,7 +91,7 @@ RMProjectedPoint RMProjectedPointMake(double x, double y);
 RMProjectedRect  RMProjectedRectMake(double x, double y, double width, double height);
 RMProjectedSize  RMProjectedSizeMake(double width, double heigth);
 
-RMProjectedRect RMProjectedRectZero();
+RMProjectedRect RMProjectedRectZero(void);
 bool RMProjectedRectIsZero(RMProjectedRect rect);
 
 #pragma mark -

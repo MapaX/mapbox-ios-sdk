@@ -50,7 +50,7 @@ typedef struct {
 char RMTilesEqual(RMTile one, RMTile two);
 
 char RMTileIsDummy(RMTile tile);
-RMTile RMTileDummy();
+RMTile RMTileDummy(void);
 
 RMTile RMTileMake(uint32_t x, uint32_t y, short zoom);
 
